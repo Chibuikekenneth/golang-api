@@ -9,6 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// NewDB returns a new database connection
 func NewDB(url string) *sql.DB {
 	db, err := sql.Open("postgres", url)
 	if err != nil {
