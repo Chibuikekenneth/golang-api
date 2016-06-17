@@ -27,6 +27,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.Handle("/todos", &AllTodos{todoMapper}).Methods(http.MethodGet)
+	r.Handle("/todos", &CreateTodo{todoMapper}).Methods(http.MethodPost)
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
