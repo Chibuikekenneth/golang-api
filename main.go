@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -10,16 +9,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// NewDB returns a new database connection
-func NewDB(url string) *sql.DB {
-	db, err := sql.Open("postgres", url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return db
-}
-
 func main() {
 	url := "postgres://hhgffzzd:aZ28VW-KxEUfRuzxzPbut7HeREh3DTNu@pellefant.db.elephantsql.com:5432/hhgffzzd"
 	db := NewDB(url)
@@ -27,9 +16,12 @@ func main() {
 	todoMapper := &DBTodoMapper{db}
 
 	r := mux.NewRouter()
-	r.Handle("/todos", &AllTodos{todoMapper}).Methods(http.MethodGet)
-	r.Handle("/todos", &CreateTodo{todoMapper}).Methods(http.MethodPost)
-	r.Handle("/todos/{ID:[0-9]+}", &UpdateTodo{todoMapper}).Methods(http.MethodPatch)
+	r.Handle("/todos", &AllTodos{todoMapper}).
+		Methods(http.MethodGet)
+	r.Handle("/todos", &CreateTodo{todoMapper}).
+		Methods(http.MethodPost)
+	r.Handle("/todos/{ID:[0-9]+}", &UpdateTodo{todoMapper}).
+		Methods(http.MethodPatch)
 
 	allowHeaders := handlers.AllowedHeaders([]string{
 		"Content-Type",

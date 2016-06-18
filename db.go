@@ -1,6 +1,19 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+)
+
+// NewDB returns a new database connection
+func NewDB(url string) *sql.DB {
+	db, err := sql.Open("postgres", url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return db
+}
 
 // Todo is the domain object representing todos
 type Todo struct {
