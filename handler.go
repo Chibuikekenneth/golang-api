@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -21,10 +24,17 @@ type NewTodo struct {
 	Text string `json:"text"`
 }
 
+// EditTodoRequest represents a user's request to toggle the
+// completed property of a todo
+type EditTodoRequest struct {
+	Completed bool `json:"completed"`
+}
+
 // SerializedTodo is the serializable JSON shape of a Todo
 type SerializedTodo struct {
-	ID   int    `json:"id"`
-	Text string `json:"text"`
+	ID        int    `json:"id"`
+	Text      string `json:"text"`
+	Completed bool   `json:"completed"`
 }
 
 // AllTodos returns all todos in the datastore
@@ -46,8 +56,9 @@ func (a *AllTodos) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var serializedTodos []SerializedTodo
 	for _, t := range todos {
 		serializedTodos = append(serializedTodos, SerializedTodo{
-			ID:   t.ID,
-			Text: t.Text,
+			ID:        t.ID,
+			Text:      t.Text,
+			Completed: t.Completed,
 		})
 	}
 
@@ -80,5 +91,54 @@ func (c *CreateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	rw.Header().Set(contentType, applicationJSON)
 	rw.WriteHeader(http.StatusCreated)
-	encoder.Encode(SerializedTodo{ID: todo.ID, Text: todo.Text})
+	encoder.Encode(SerializedTodo{
+		ID:        todo.ID,
+		Text:      todo.Text,
+		Completed: todo.Completed,
+	})
+}
+
+// UpdateTodo is the handler for updating todos in the database
+type UpdateTodo struct {
+	mapper TodoMapper
+}
+
+func (u *UpdateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	encoder := json.NewEncoder(rw)
+	decoder := json.NewDecoder(r.Body)
+
+	vars := mux.Vars(r)
+	todoIDStr := vars["ID"]
+
+	todoID, err := strconv.Atoi(todoIDStr)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
+		return
+	}
+
+	var editReq EditTodoRequest
+	err = decoder.Decode(&editReq)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
+		return
+	}
+
+	updatedTodo, err := u.mapper.UpdateTodo(EditedTodo{
+		ID:        todoID,
+		Completed: editReq.Completed,
+	})
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
+		return
+	}
+
+	rw.Header().Set(contentType, applicationJSON)
+	encoder.Encode(SerializedTodo{
+		ID:        updatedTodo.ID,
+		Text:      updatedTodo.Text,
+		Completed: updatedTodo.Completed,
+	})
 }
