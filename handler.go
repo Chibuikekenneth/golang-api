@@ -21,13 +21,24 @@ type ErrorMsg struct {
 
 // NewTodo is a JSON struct to intake new todo requests
 type NewTodo struct {
-	Text string `json:"text"`
+	Text *string `json:"text"`
+}
+
+// IsInvalid checks if the NewTodo is invalid
+func (n *NewTodo) IsInvalid() bool {
+	return n.Text == nil
 }
 
 // EditTodoRequest represents a user's request to toggle the
 // completed property of a todo
 type EditTodoRequest struct {
-	Completed bool `json:"completed"`
+	Completed *bool `json:"completed"`
+}
+
+// IsInvalid checks the EditTodoRequest for validity and returns false if
+// Completed is nil
+func (e *EditTodoRequest) IsInvalid() bool {
+	return e.Completed == nil
 }
 
 // SerializedTodo is the serializable JSON shape of a Todo
@@ -43,6 +54,8 @@ type AllTodos struct {
 }
 
 func (a *AllTodos) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set(contentType, applicationJSON)
+
 	encoder := json.NewEncoder(rw)
 	todos, err := a.mapper.GetAllTodos()
 	if err != nil {
@@ -50,8 +63,6 @@ func (a *AllTodos) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
 		return
 	}
-
-	rw.Header().Set(contentType, applicationJSON)
 
 	var serializedTodos []SerializedTodo
 	for _, t := range todos {
@@ -71,14 +82,16 @@ type CreateTodo struct {
 }
 
 func (c *CreateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set(contentType, applicationJSON)
+
 	encoder := json.NewEncoder(rw)
 	decoder := json.NewDecoder(r.Body)
 
 	var newTodo NewTodo
 	err := decoder.Decode(&newTodo)
-	if err != nil {
+	if err != nil || newTodo.IsInvalid() {
 		rw.WriteHeader(http.StatusBadRequest)
-		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
+		encoder.Encode(&ErrorMsg{"invalid request"})
 		return
 	}
 
@@ -89,7 +102,6 @@ func (c *CreateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.Header().Set(contentType, applicationJSON)
 	rw.WriteHeader(http.StatusCreated)
 	encoder.Encode(SerializedTodo{
 		ID:        todo.ID,
@@ -104,6 +116,8 @@ type UpdateTodo struct {
 }
 
 func (u *UpdateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set(contentType, applicationJSON)
+
 	encoder := json.NewEncoder(rw)
 	decoder := json.NewDecoder(r.Body)
 
@@ -113,21 +127,21 @@ func (u *UpdateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	todoID, err := strconv.Atoi(todoIDStr)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
-		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
+		encoder.Encode(&ErrorMsg{"invalid request"})
 		return
 	}
 
 	var editReq EditTodoRequest
 	err = decoder.Decode(&editReq)
-	if err != nil {
+	if err != nil || editReq.IsInvalid() {
 		rw.WriteHeader(http.StatusBadRequest)
-		encoder.Encode(&ErrorMsg{fmt.Sprintf("%s", err)})
+		encoder.Encode(&ErrorMsg{"invalid request"})
 		return
 	}
 
 	updatedTodo, err := u.mapper.UpdateTodo(EditedTodo{
 		ID:        todoID,
-		Completed: editReq.Completed,
+		Completed: *editReq.Completed,
 	})
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
@@ -135,7 +149,6 @@ func (u *UpdateTodo) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rw.Header().Set(contentType, applicationJSON)
 	encoder.Encode(SerializedTodo{
 		ID:        updatedTodo.ID,
 		Text:      updatedTodo.Text,
