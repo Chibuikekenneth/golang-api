@@ -1,0 +1,12 @@
+[submodule "vendor/github.com/lib/pq"]
+	path = vendor/github.com/lib/pq
+	url = git@github.com:lib/pq.git
+[submodule "vendor/github.com/gorilla/mux"]
+	path = vendor/github.com/gorilla/mux
+	url = git@github.com:gorilla/mux.git
+[submodule "vendor/github.com/gorilla/handlers"]
+	path = vendor/github.com/gorilla/handlers
+	url = git@github.com:gorilla/handlers.git
+[submodule "vendor/github.com/gorilla/context"]
+	path = vendor/github.com/gorilla/context
+	url = git@github.com:gorilla/context
