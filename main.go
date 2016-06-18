@@ -10,7 +10,9 @@ import (
 )
 
 func main() {
-	url := "postgres://hhgffzzd:aZ28VW-KxEUfRuzxzPbut7HeREh3DTNu@pellefant.db.elephantsql.com:5432/hhgffzzd"
+	url := "postgres://" +
+		"hhgffzzd:aZ28VW-KxEUfRuzxzPbut7HeREh3DTNu@" +
+		"pellefant.db.elephantsql.com:5432/hhgffzzd"
 	db := NewDB(url)
 
 	todoMapper := &DBTodoMapper{db}
