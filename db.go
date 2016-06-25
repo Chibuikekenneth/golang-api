@@ -83,6 +83,8 @@ func (t *DBTodoMapper) AddTodo(todo NewTodo) (*Todo, error) {
 	return &Todo{ID: id, Text: text, Completed: completed}, nil
 }
 
+// UpdateTodo accepts an edited todo object and persists that updated database
+// to the database
 func (t *DBTodoMapper) UpdateTodo(editedTodo EditedTodo) (*Todo, error) {
 	var id int
 	var text string
