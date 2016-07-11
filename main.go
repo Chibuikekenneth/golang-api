@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -10,9 +11,10 @@ import (
 )
 
 func main() {
-	url := "postgres://" +
-		"hhgffzzd:aZ28VW-KxEUfRuzxzPbut7HeREh3DTNu@" +
-		"pellefant.db.elephantsql.com:5432/hhgffzzd"
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		log.Fatal("a DATABASE_URL must be present in the environment to run.")
+	}
 	db := NewDB(url)
 
 	todoMapper := &DBTodoMapper{db}
